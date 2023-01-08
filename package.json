@@ -1,0 +1,39 @@
+{
+  "name": "ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "gh": "tsc && vite build --base=/delta-sharing-browser/"
+  },
+  "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.20.0",
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "@mui/icons-material": "^5.11.0",
+    "@mui/lab": "^5.0.0-alpha.114",
+    "@mui/material": "^5.11.3",
+    "@mui/styles": "^5.11.2",
+    "@tanstack/react-query": "^4.20.9",
+    "@types/ace": "^0.0.48",
+    "ace-builds": "^1.14.0",
+    "apache-arrow": "^10.0.1",
+    "framer-motion": "^8.2.4",
+    "react": "^18.2.0",
+    "react-ace": "^10.1.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.6.1",
+    "react-split-pane": "^0.1.92",
+    "zustand": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.26",
+    "@types/react-dom": "^18.0.9",
+    "@vitejs/plugin-react-swc": "^3.0.0",
+    "typescript": "^4.9.3",
+    "vite": "^4.0.0"
+  }
+}
