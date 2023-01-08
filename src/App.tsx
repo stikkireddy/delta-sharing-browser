@@ -22,6 +22,8 @@ function App() {
     // const {db} = useDuckDB((state) => state.db)
     const createAndCloseConnection = async () => {
         console.log("Setting up duckdb")
+        if (db != null)
+            return
         await startDuckDB(setDB)
     }
     // const runQuery = () => {
