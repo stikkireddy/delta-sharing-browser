@@ -12,19 +12,25 @@ import {AsyncDuckDB} from "@duckdb/duckdb-wasm";
 import LoadingButton from "@mui/lab/LoadingButton";
 import CachedIcon from '@mui/icons-material/Cached';
 import {useSQLStore} from "../store/SqlStore";
+import {useDownloadState} from "../store/DownloadFileStore";
+import {ShareAnimation} from "../navbar/ShareAnimation";
 
 const registerTable = async (urls: Array<string>,
                              db: AsyncDuckDB | null,
                              filePath: string,
                              urlCache: Record<string, boolean>,
-                             addToUrlCache: (url: string) => void) => {
-    await Promise.all(urls.slice(0,10).map(async (url) => {
+                             addToUrlCache: (url: string) => void,
+                             tablePath: string,
+                             updateProgress: (table: string, entry?: string) => void,
+                             resetProgress: (table: string) => void,
+                             viewName: string,
+) => {
+    await Promise.all(urls.slice(0, 10).map(async (url, index) => {
         const urlBase = url.split("?")[0]
         if (urlCache[urlBase] === undefined) {
             const data = await fetch(url).then((r) => {
                 return r.blob()
             }).then((r) => {
-                console.log(r)
                 return r.arrayBuffer()
             })
             const parts = urlBase.split("/")
@@ -32,7 +38,21 @@ const registerTable = async (urls: Array<string>,
             await db?.registerFileBuffer(`${filePath}/${fileName}`, new Uint8Array(await data));
             addToUrlCache(urlBase)
         }
+        // hack to let atleast one of them create a view who ever finishes first
+        console.log(`Loading view: ${viewName} to path ${tablePath}/* from request: ${index}`)
+        const query = `
+    CREATE OR REPLACE VIEW ${viewName} 
+    AS SELECT * FROM read_parquet('${tablePath}/*')
+`
+        console.log(query)
+        const conn = await db?.connect()
+        await conn?.query(query);
+        conn?.close()
+
+
+        updateProgress(tablePath, url)
     }))
+    resetProgress(tablePath)
 }
 
 const TableItem = (props: { table: Record<string, string>, index: number }) => {
@@ -47,6 +67,11 @@ const TableItem = (props: { table: Record<string, string>, index: number }) => {
     const urlCache = useUrlsState((state) => state.urls)
     const addToUrlCache = useUrlsState((state) => state.addEntry)
 
+    const setDownloadReq = useDownloadState(state => state.setDownloadReq)
+    const resetProgress = useDownloadState(state => state.resetProgress)
+    const addToProgress = useDownloadState(state => state.addToProgress)
+
+
     const onClickHandler = async () => {
         setLoading(true)
         const urls = await fetch(`https://dev.api.tsriharsha.io/sharing/urls/${shareName}/${schemaName}/${tableName}`).then((r) => {
@@ -55,39 +80,28 @@ const TableItem = (props: { table: Record<string, string>, index: number }) => {
             return r["urls"]
         })
 
-        console.log(urlCache)
+        let tablePath = `${shareName}/${schemaName}/${tableName}`
+        setDownloadReq(tablePath, urls.length)
         await registerTable(urls, db,
-            `${shareName}/${schemaName}/${tableName}`, urlCache, addToUrlCache)
-        // const urlBase = urls[0].split("?")[0]
-        // if (urlCache[urlBase] === undefined){
-        //     const data = await fetch(urls[0]).then((r) => {
-        //         return r.blob()
-        //     }).then((r) => {
-        //         console.log(r)
-        //         return r.arrayBuffer()
-        //     })
-        //
-        //     await db?.registerFileBuffer('flights/data1.parquet', new Uint8Array(await data));
-        //     addToUrlCache(urlBase)
-        // }
+            `${shareName}/${schemaName}/${tableName}`, urlCache, addToUrlCache,
+            tablePath,
+            addToProgress,
+            resetProgress,
+            `${schemaName}_${tableName} `
+        )
 
-        // const url_list = JSON.stringify(urls)
-        console.log(urls)
-        // --         SELECT count(1) FROM parquet_scan('flights/*')
         const query = `
         CREATE OR REPLACE VIEW ${schemaName}_${tableName} 
         AS SELECT * FROM read_parquet('${shareName}/${schemaName}/${tableName}/*')
     `
         console.log(query)
         const conn = await db?.connect()
-        const results = await conn?.query(query);
-        console.log(results?.toString())
+        await conn?.query(query);
         conn?.close()
 
         const conn2 = await db?.connect()
-        const results2 = await conn2?.query(`SELECT count(1)
-                                             from ${schemaName}_${tableName}`);
-        console.log(results2?.toString())
+        await conn2?.query(`SELECT count(1)
+                            from ${schemaName}_${tableName}`);
         conn2?.close()
         setLoading(false)
 
@@ -103,19 +117,13 @@ const TableItem = (props: { table: Record<string, string>, index: number }) => {
                        className={"RefreshButton"}
                        style={{minWidth: "0px"}}
                        loading={loading}
+                       loadingIndicator={<ShareAnimation color={"rgba(159, 90, 253, 0.70)"}/>}
                        onClick={onClickHandler}
-            //            loadingPosition="end"
                        size={"small"}
                        endIcon={<CachedIcon/>}>
         </LoadingButton>
-        {/*<Switch*/}
-        {/*    edge="end"*/}
-        {/*    onChange={onClickHandler}*/}
-        {/*/>*/}
     </ListItem>
 }
-
-
 
 
 export function TableViewer() {
@@ -147,10 +155,7 @@ export function TableViewer() {
         tables.map((table: Record<string, string>) => {
             let schemaName = table["schema_name"]
             let tableName = table["table_name"]
-            let shareName = table["share_name"]
             addTable(`${schemaName}_${tableName}`)
-            //cant do this no file means no schema for inference
-            // addView(shareName, schemaName, tableName)
         })
 
     }
@@ -169,22 +174,8 @@ export function TableViewer() {
             subheader={<ListSubheader>Share Tables</ListSubheader>}
         >
             {tables && tables.map((table, index) => {
-               return <TableItem key={index} table={table} index={index}/>
+                return <TableItem key={index} table={table} index={index}/>
             })}
-            {/*<ListItem style={{paddingTop: 0, paddingBottom: 0}}>*/}
-            {/*    <ListItemIcon style={{minWidth: "35px", width: "30px"}}>*/}
-            {/*        <TableViewIcon/>*/}
-            {/*    </ListItemIcon>*/}
-            {/*    <ListItemText id="switch-list-label-bluetooth" primary="Bluetooth"/>*/}
-            {/*    <Switch*/}
-            {/*        edge="end"*/}
-            {/*        onChange={handleToggle('bluetooth')}*/}
-            {/*        checked={checked.indexOf('bluetooth') !== -1}*/}
-            {/*        inputProps={{*/}
-            {/*            'aria-labelledby': 'switch-list-label-bluetooth',*/}
-            {/*        }}*/}
-            {/*    />*/}
-            {/*</ListItem>*/}
         </List>
     );
 }

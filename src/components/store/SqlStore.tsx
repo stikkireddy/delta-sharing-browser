@@ -1,5 +1,4 @@
 import create from "zustand";
-import {AsyncDuckDB} from "@duckdb/duckdb-wasm";
 
 export type Column = {
     name: string;
@@ -10,6 +9,7 @@ export type Row = Record<string, string>
 interface SqlStore {
     sql: string
     loading: boolean
+    queryStatus: string | null,
     tables: string[]
     columns: Column[]
     rows: Row[]
@@ -17,12 +17,14 @@ interface SqlStore {
     setData: (cols: Column[], rows: Row[]) => void
     addTable: (table: string) => void
     setLoading: (loading: boolean) => void
+    setQueryStatus: (queryStatus: string) => void
 }
 
 export const useSQLStore = create<SqlStore>((set) => ({
     sql: "",
     loading: false,
     columns: [],
+    queryStatus: null,
     tables: [],
     rows: [],
     setSqlString: (sql: string) => set((state) => ({
@@ -37,6 +39,9 @@ export const useSQLStore = create<SqlStore>((set) => ({
     })),
     setLoading: (loading: boolean) => set((state) => ({
         loading: loading
+    })),
+    setQueryStatus: (queryStatus: string) => set((state) => ({
+        queryStatus: queryStatus
     })),
 }))
 

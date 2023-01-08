@@ -6,35 +6,37 @@ import 'ace-builds/src-noconflict/ext-language_tools'
 import {useSQLStore} from "../store/SqlStore";
 import {useDuckDB} from "../store/DuckDB";
 import {execSql} from "./DeltaSharingBrowser";
-import { format } from "sql-formatter";
-// import 'ace-builds/src-noconflict/snippets/aql'
+import {format} from "sql-formatter";
+import shallow from "zustand/shallow";
+import 'ace-builds/src-noconflict/snippets/sql'
 
 export const CodeEditor = () => {
     const setSqlString = useSQLStore((state) => state.setSqlString)
 
     function onChange(newValue: string) {
-        console.log(newValue)
         setSqlString(newValue)
     }
 
     const tables = useSQLStore((state) => state.tables)
 
-    const [db] = useDuckDB((state) => [
-        state.db
-    ])
+    const db = useDuckDB((state) => state.db, shallow)
     const setData = useSQLStore((state) => state.setData)
     const setLoading = useSQLStore((state) => state.setLoading)
+    const setQueryStatus = useSQLStore((state) => state.setQueryStatus)
+    // @ts-ignore
+    const runsql = (editor) => execSql(db, editor.getValue(), setData, setLoading, setQueryStatus)
 
     return (
         <>
             {db && <AceEditor
                 width={"100%"}
 
-                // height={"auto"}
+                height={"400px"}
                 mode="sql"
                 theme="tomorrow"
                 onChange={onChange}
                 onFocus={(_, editor) => {
+                    setSqlString(editor?.getValue() ?? "")
                     editor?.completers.push({
                         getCompletions: function (editor, session, pos, prefix, callback) {
                             // @ts-ignore
@@ -50,36 +52,37 @@ export const CodeEditor = () => {
                             callback(null, completions);
                         }
                     })
+                    editor?.commands.removeCommand(
+                        {   // commands is array of key bindings.
+                            name: 'execute_statement', //name for the key binding.
+                            bindKey: {win: 'Shift-Enter', mac: 'Shift-Enter'}, //key combination used for the command.
+                            exec: runsql,
+                        })
+                    editor?.commands.addCommand({   // commands is array of key bindings.
+                        name: 'execute_statement', //name for the key binding.
+                        bindKey: {win: 'Shift-Enter', mac: 'Shift-Enter'}, //key combination used for the command.
+                        exec: runsql,
+
+                    })
                 }}
-                name="UNIQUE_ID_OF_DIV"
+                name="deltasharing-sql-editor"
                 commands={[{   // commands is array of key bindings.
                     name: 'execute_statement', //name for the key binding.
                     bindKey: {win: 'Shift-Enter', mac: 'Shift-Enter'}, //key combination used for the command.
-                    exec: (editor) => {
-                        // let sqlStmt = (editor.getSelectedText() !== "") ? editor.getSelectedText() : editor.getValue()
-                        // console.log(editor.getSelectedText())
-                        console.log('key-binding used')
-                        console.log(editor.getValue())
-                        execSql(db, editor.getValue(), setData, setLoading)
-                        // .catch((error) => console.log(error))
-                    }  //function to execute when keys are pressed.
+                    exec: runsql,
                 }, {   // commands is array of key bindings.
                     name: 'format_statement', //name for the key binding.
                     bindKey: {win: 'Ctrl-F', mac: 'Command-F'}, //key combination used for the command.
                     exec: (editor) => {
                         // let sqlStmt = (editor.getSelectedText() !== "") ? editor.getSelectedText() : editor.getValue()
                         // console.log(editor.getSelectedText())
-                        console.log('format_stmt used')
-                        console.log(editor.getValue())
                         let res = format(editor.getValue(), {
-                          language: 'spark',
-                          tabWidth: 2,
-                          keywordCase: 'upper',
-                          linesBetweenQueries: 2,
+                            language: 'spark',
+                            tabWidth: 2,
+                            keywordCase: 'upper',
+                            linesBetweenQueries: 2,
                         });
                         editor.setValue(res)
-                        // execSql(db, editor.getValue(), setData, setLoading)
-                        // .catch((error) => console.log(error))
                     }  //function to execute when keys are pressed.
                 },
                 ]}
@@ -93,11 +96,12 @@ export const CodeEditor = () => {
                 showPrintMargin={true}
                 showGutter={true}
                 highlightActiveLine={true}
+                defaultValue={"SELECT * FROM sri_delta_sharing_airports;"}
                 setOptions={{
 
                     enableBasicAutocompletion: true,
                     enableLiveAutocompletion: true,
-                    // enableSnippets: true,
+                    enableSnippets: true,
                     showLineNumbers: true,
                     tabSize: 4,
                 }}
