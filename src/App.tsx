@@ -21,6 +21,7 @@ function App() {
     ])
     // const {db} = useDuckDB((state) => state.db)
     const createAndCloseConnection = async () => {
+        console.log("Setting up duckdb")
         await startDuckDB(setDB)
     }
     // const runQuery = () => {
@@ -32,8 +33,8 @@ function App() {
     // }
 
     useEffect(() => {
+        createAndCloseConnection()
         return () => {
-            createAndCloseConnection()
         }
     }, [])
 

@@ -22,6 +22,7 @@ export const useDuckDB = create<DuckDBState>((set) => ({
 
 export const startDuckDB = async (setDB: (db: duckdb.AsyncDuckDB | null) => void) => {
     // const {setDB, setConn} = useDuckDB()
+    console.log("Loading duckdb...")
     const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
         mvp: {
             mainModule: duckdb_wasm,
