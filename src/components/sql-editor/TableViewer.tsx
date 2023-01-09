@@ -14,6 +14,9 @@ import CachedIcon from '@mui/icons-material/Cached';
 import {useSQLStore} from "../store/SqlStore";
 import {useDownloadState} from "../store/DownloadFileStore";
 import {ShareAnimation} from "../navbar/ShareAnimation";
+import {getOrPutArrayBuffer} from "../../cache/FileSystemCache";
+import {FileSystemDirectoryHandle} from "native-file-system-adapter/types/src/showDirectoryPicker";
+import {Backdrop, CircularProgress} from "@mui/material";
 
 const registerTable = async (urls: Array<string>,
                              db: AsyncDuckDB | null,
@@ -24,20 +27,35 @@ const registerTable = async (urls: Array<string>,
                              updateProgress: (table: string, entry?: string) => void,
                              resetProgress: (table: string) => void,
                              viewName: string,
+                             cacheDef: {
+                                 cacheDirHandle: FileSystemDirectoryHandle | null,
+                                 shareName: string, schemaName: string, tableName: string
+                             }
 ) => {
     await Promise.all(urls.slice(0, 10).map(async (url, index) => {
-        const urlBase = url.split("?")[0]
+        let urlBase = url.split("?")[0]
+        let fileNameParts = urlBase.split("/")
+        let fileName = fileNameParts[fileNameParts.length - 1]
         if (urlCache[urlBase] === undefined) {
-            const data = await fetch(url).then((r) => {
-                return r.blob()
-            }).then((r) => {
-                return r.arrayBuffer()
-            })
-            const parts = urlBase.split("/")
-            const fileName = parts[parts.length - 1]
+            const data = (cacheDef.cacheDirHandle == null) ?
+                (await fetch(url).then((r) => {
+                    return r.blob()
+                }).then((r) => {
+                    return r.arrayBuffer()
+                })) : getOrPutArrayBuffer(cacheDef.cacheDirHandle,
+                    cacheDef.shareName,
+                    cacheDef.schemaName,
+                    cacheDef.tableName,
+                    fileName,
+                    url).then((r) => {
+                    return r
+                })
+            // const parts = urlBase.split("/")
+            // const fileName = parts[parts.length - 1]
             await db?.registerFileBuffer(`${filePath}/${fileName}`, new Uint8Array(await data));
             addToUrlCache(urlBase)
         }
+
         // hack to let atleast one of them create a view who ever finishes first
         console.log(`Loading view: ${viewName} to path ${tablePath}/* from request: ${index}`)
         const query = `
@@ -71,6 +89,7 @@ const TableItem = (props: { table: Record<string, string>, index: number }) => {
     const resetProgress = useDownloadState(state => state.resetProgress)
     const addToProgress = useDownloadState(state => state.addToProgress)
 
+    const cacheDirHandle = useDownloadState((state) => state.cacheDirHandle)
 
     const onClickHandler = async () => {
         setLoading(true)
@@ -87,7 +106,13 @@ const TableItem = (props: { table: Record<string, string>, index: number }) => {
             tablePath,
             addToProgress,
             resetProgress,
-            `${schemaName}_${tableName} `
+            `${schemaName}_${tableName} `,
+            {
+                cacheDirHandle: cacheDirHandle,
+                shareName: shareName,
+                schemaName: schemaName,
+                tableName: tableName,
+            }
         )
 
         const query = `
@@ -129,19 +154,10 @@ const TableItem = (props: { table: Record<string, string>, index: number }) => {
 export function TableViewer() {
     const [tables, setTables] = useState([])
     const addTable = useSQLStore((state) => state.addTable)
-    const [db] = useDuckDB((state) => [
-        state.db
-    ])
-
-    // const addView = async (shareName: string, schemaName: string, tableName: string) => {
-    //     const conn = await db?.connect()
-    //             const query = `
-    //         CREATE OR REPLACE VIEW ${schemaName}_${tableName}
-    //         AS SELECT * FROM read_parquet('${shareName}/${schemaName}/${tableName}/*')
-    //     `
-    //     await conn?.query(query)
-    //     conn?.close()
-    // }
+    // const [db] = useDuckDB((state) => [
+    //     state.db
+    // ])
+    // const credentialsFileData = useDownloadState((state) => state.credentialsFileData)
 
     const getTables = async () => {
         const urls = await fetch("https://dev.api.tsriharsha.io/sharing/get-tables").then((r) => {
@@ -168,14 +184,21 @@ export function TableViewer() {
     }, [])
 
 
-    return (
-        <List
-            sx={{width: '100%', maxWidth: 360, bgcolor: 'background.paper'}}
-            subheader={<ListSubheader>Share Tables</ListSubheader>}
-        >
-            {tables && tables.map((table, index) => {
-                return <TableItem key={index} table={table} index={index}/>
-            })}
-        </List>
-    );
+    return <>{
+        // (tables.length === 0) ? <Backdrop
+        //         sx={{color: '#fff', position: 'absolute', zIndex: (theme) => theme.zIndex.drawer + 1}}
+        //         open={true}
+        //         // onClick={handleClose}
+        //     >
+        //         <CircularProgress color="inherit"/>
+        //     </Backdrop> :
+            <List
+                sx={{width: '100%', maxWidth: 360, bgcolor: 'background.paper'}}
+                subheader={<ListSubheader>Share Tables</ListSubheader>}
+            >
+                {tables && tables.map((table, index) => {
+                    return <TableItem key={index} table={table} index={index}/>
+                })}
+            </List>
+    }</>
 }

@@ -23,8 +23,16 @@ export const CodeEditor = () => {
     const setData = useSQLStore((state) => state.setData)
     const setLoading = useSQLStore((state) => state.setLoading)
     const setQueryStatus = useSQLStore((state) => state.setQueryStatus)
+    const setSelectedSql = useSQLStore((state) => state.setSelectedSql)
+
     // @ts-ignore
-    const runsql = (editor) => execSql(db, editor.getValue(), setData, setLoading, setQueryStatus)
+    const runsql = (editor) => {
+        if (editor.getSelectedText() === "" || editor.getSelectedText() === null) {
+            execSql(db, editor.getValue(), setData, setLoading, setQueryStatus)
+            return
+        }
+        execSql(db, editor.getSelectedText(), setData, setLoading, setQueryStatus)
+    }
 
     return (
         <>
@@ -34,6 +42,14 @@ export const CodeEditor = () => {
                 height={"400px"}
                 mode="sql"
                 theme="tomorrow"
+                onSelectionChange={(selectedValue, event) => {
+                    if (selectedValue.isEmpty()) {
+                        setSelectedSql(false)
+                    } else {
+                        setSelectedSql(true)
+                    }
+
+                }}
                 onChange={onChange}
                 onFocus={(_, editor) => {
                     setSqlString(editor?.getValue() ?? "")
@@ -74,8 +90,6 @@ export const CodeEditor = () => {
                     name: 'format_statement', //name for the key binding.
                     bindKey: {win: 'Ctrl-F', mac: 'Command-F'}, //key combination used for the command.
                     exec: (editor) => {
-                        // let sqlStmt = (editor.getSelectedText() !== "") ? editor.getSelectedText() : editor.getValue()
-                        // console.log(editor.getSelectedText())
                         let res = format(editor.getValue(), {
                             language: 'spark',
                             tabWidth: 2,

@@ -7,6 +7,7 @@ export type Column = {
 export type Row = Record<string, string>
 
 interface SqlStore {
+    selectedSql: boolean,
     sql: string
     loading: boolean
     queryStatus: string | null,
@@ -17,10 +18,12 @@ interface SqlStore {
     setData: (cols: Column[], rows: Row[]) => void
     addTable: (table: string) => void
     setLoading: (loading: boolean) => void
+    setSelectedSql: (selectedSql: boolean) => void
     setQueryStatus: (queryStatus: string) => void
 }
 
 export const useSQLStore = create<SqlStore>((set) => ({
+    selectedSql: false,
     sql: "",
     loading: false,
     columns: [],
@@ -39,6 +42,9 @@ export const useSQLStore = create<SqlStore>((set) => ({
     })),
     setLoading: (loading: boolean) => set((state) => ({
         loading: loading
+    })),
+    setSelectedSql: (selectedSql: boolean) => set((state) => ({
+        selectedSql: selectedSql
     })),
     setQueryStatus: (queryStatus: string) => set((state) => ({
         queryStatus: queryStatus

@@ -25,7 +25,7 @@ function App() {
         createAndCloseConnection()
         return () => {
         }
-    }, [db])
+    }, [])
 
     return (
         <div className="App">

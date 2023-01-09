@@ -33,8 +33,6 @@ const getProgressBars = (downloadReq: Record<string, number>, progress: Record<s
                                     <span style={{minWidth: "200px"}}>{parts[parts.length-1]}</span>
                                     <FetchProgressbar providedProgress={downloadProgress} className={"snackbar"}/>
                                 </Stack>
-                            // console.log(k)
-                            // resetProgress(k)
                             return null
     })
     const actualProgressBars = progressBars.filter((v) => v != null)
