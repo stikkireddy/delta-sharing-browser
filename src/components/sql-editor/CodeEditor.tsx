@@ -9,9 +9,11 @@ import {execSql} from "./DeltaSharingBrowser";
 import {format} from "sql-formatter";
 import shallow from "zustand/shallow";
 import 'ace-builds/src-noconflict/snippets/sql'
+import {useState} from "react";
 
 export const CodeEditor = () => {
     const setSqlString = useSQLStore((state) => state.setSqlString)
+    const [editor, setEditor] = useState<any>()
 
     function onChange(newValue: string) {
         setSqlString(newValue)
@@ -31,6 +33,7 @@ export const CodeEditor = () => {
             execSql(db, editor.getValue(), setData, setLoading, setQueryStatus)
             return
         }
+        // console.log(editor.getSelectedText())
         execSql(db, editor.getSelectedText(), setData, setLoading, setQueryStatus)
     }
 
@@ -43,15 +46,19 @@ export const CodeEditor = () => {
                 mode="sql"
                 theme="tomorrow"
                 onSelectionChange={(selectedValue, event) => {
+                    // console.log(selectedValue, event)
+                    // console.log(editor.getSelectedText())
                     if (selectedValue.isEmpty()) {
                         setSelectedSql(false)
                     } else {
+                        setSqlString(editor.getSelectedText())
                         setSelectedSql(true)
                     }
 
                 }}
                 onChange={onChange}
                 onFocus={(_, editor) => {
+                    setEditor(editor)
                     setSqlString(editor?.getValue() ?? "")
                     editor?.completers.push({
                         getCompletions: function (editor, session, pos, prefix, callback) {

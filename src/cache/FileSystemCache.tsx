@@ -35,7 +35,7 @@ export const getOrPutArrayBuffer = async (
     tableName: string,
     fileName: string,
     url: string,
-    ): Promise<ArrayBuffer> => {
+    ): Promise<any> => {
     // const cacheHandle = await getDirHandle()
     // const cacheDir = cacheDirHandle
     const shareHandle = await getDirHandle(cacheDirHandle, shareName)
@@ -45,16 +45,17 @@ export const getOrPutArrayBuffer = async (
     try{
 
         let fileHandle = await tableHandle.getFileHandle(fileName)
-        let arrayBuffer =  await (await fileHandle.getFile()).arrayBuffer()
+        // let arrayBuffer =  await (await fileHandle.getFile()).arrayBuffer()
         console.log("Cache hit!")
-        return arrayBuffer
+        return fileHandle
     } catch (error) {
         console.log("Cache miss")
         let blob = getData(url)
         let fileHandle = await tableHandle.getFileHandle(fileName, {create: true})
         // @ts-ignore
         await (await blob).stream().pipeTo(await fileHandle.createWritable())
-        return (await fileHandle.getFile()).arrayBuffer()
+        return fileHandle
+        // return (await fileHandle.getFile()).arrayBuffer()
     }
 }
 

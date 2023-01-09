@@ -8,7 +8,7 @@ import ListItemText from '@mui/material/ListItemText';
 import ListSubheader from '@mui/material/ListSubheader';
 import {useDuckDB} from "../store/DuckDB";
 import {useUrlsState} from "../store/PresignedUrlCache";
-import {AsyncDuckDB} from "@duckdb/duckdb-wasm";
+import {AsyncDuckDB, DuckDBDataProtocol} from "@duckdb/duckdb-wasm";
 import LoadingButton from "@mui/lab/LoadingButton";
 import CachedIcon from '@mui/icons-material/Cached';
 import {useSQLStore} from "../store/SqlStore";
@@ -32,35 +32,50 @@ const registerTable = async (urls: Array<string>,
                                  shareName: string, schemaName: string, tableName: string
                              }
 ) => {
-    await Promise.all(urls.slice(0, 10).map(async (url, index) => {
-        let urlBase = url.split("?")[0]
-        let fileNameParts = urlBase.split("/")
-        let fileName = fileNameParts[fileNameParts.length - 1]
-        if (urlCache[urlBase] === undefined) {
-            const data = (cacheDef.cacheDirHandle == null) ?
-                (await fetch(url).then((r) => {
-                    return r.blob()
-                }).then((r) => {
-                    return r.arrayBuffer()
-                })) : getOrPutArrayBuffer(cacheDef.cacheDirHandle,
-                    cacheDef.shareName,
-                    cacheDef.schemaName,
-                    cacheDef.tableName,
-                    fileName,
-                    url).then((r) => {
-                    return r
-                })
-            // const parts = urlBase.split("/")
-            // const fileName = parts[parts.length - 1]
-            await db?.registerFileBuffer(`${filePath}/${fileName}`, new Uint8Array(await data));
-            addToUrlCache(urlBase)
-        }
+    await Promise.all(urls
+        // .slice(0, 10)
+        .map(async (url, index) => {
+            let urlBase = url.split("?")[0]
+            let fileNameParts = urlBase.split("/")
+            let fileName = fileNameParts[fileNameParts.length - 1]
+            if (urlCache[urlBase] === undefined) {
+                const data = (cacheDef.cacheDirHandle == null) ?
+                    (await fetch(url).then((r) => {
+                        return r.blob()
+                    }).then((r) => {
+                        return r.arrayBuffer()
+                    })) : getOrPutArrayBuffer(cacheDef.cacheDirHandle,
+                        cacheDef.shareName,
+                        cacheDef.schemaName,
+                        cacheDef.tableName,
+                        fileName,
+                        url).then((r) => {
+                        return r
+                    })
+                // const parts = urlBase.split("/")
+                // const fileName = parts[parts.length - 1]
+                try {
+                    console.log("loading from browser filereader")
+                    console.log(data)
+                    if (cacheDef.cacheDirHandle != null) {
+                        // local dir requires registering the file handle
+                        // TODO: refactor the weird awaits
+                        await db?.registerFileHandle(`${filePath}/${fileName}`, await (await data).getFile(), DuckDBDataProtocol.BROWSER_FILEREADER, true)
+                    } else {
+                        await db?.registerFileBuffer(`${filePath}/${fileName}`, new Uint8Array(await data));
+                    }
+                } catch (e) {
+                    console.log(`Error to load file: ${filePath}/${fileName}`)
+                    throw e
+                }
+                addToUrlCache(urlBase)
+            }
 
-        // hack to let atleast one of them create a view who ever finishes first
+            // hack to let atleast one of them create a view who ever finishes first
         console.log(`Loading view: ${viewName} to path ${tablePath}/* from request: ${index}`)
         const query = `
-    CREATE OR REPLACE VIEW ${viewName} 
-    AS SELECT * FROM read_parquet('${tablePath}/*')
+    CREATE OR REPLACE VIEW ${viewName}
+    AS SELECT * FROM parquet_scan('${tablePath}/*', filename=true)
 `
         console.log(query)
         const conn = await db?.connect()
@@ -68,8 +83,8 @@ const registerTable = async (urls: Array<string>,
         conn?.close()
 
 
-        updateProgress(tablePath, url)
-    }))
+            updateProgress(tablePath, url)
+        }))
     resetProgress(tablePath)
 }
 
@@ -117,17 +132,19 @@ const TableItem = (props: { table: Record<string, string>, index: number }) => {
 
         const query = `
         CREATE OR REPLACE VIEW ${schemaName}_${tableName} 
-        AS SELECT * FROM read_parquet('${shareName}/${schemaName}/${tableName}/*')
+        AS SELECT * FROM parquet_scan('${shareName}/${schemaName}/${tableName}/*.parquet', filename=true)
     `
         console.log(query)
         const conn = await db?.connect()
-        await conn?.query(query);
+        const results = await conn?.query(query);
         conn?.close()
+        console.log(results?.toString())
 
         const conn2 = await db?.connect()
-        await conn2?.query(`SELECT count(1)
-                            from ${schemaName}_${tableName}`);
+        const results2 = await conn2?.query(`SELECT count(1)
+                                             from ${schemaName}_${tableName}`);
         conn2?.close()
+        console.log(results2?.toString())
         setLoading(false)
 
     }
