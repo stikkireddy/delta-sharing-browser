@@ -154,9 +154,8 @@ const TableItem = (props: { table: Record<string, string>, index: number }) => {
 export function TableViewer() {
     const [tables, setTables] = useState([])
     const addTable = useSQLStore((state) => state.addTable)
-    // const [db] = useDuckDB((state) => [
-    //     state.db
-    // ])
+
+    // TODO: for future when cors is easier
     // const credentialsFileData = useDownloadState((state) => state.credentialsFileData)
 
     const getTables = async () => {
@@ -184,21 +183,14 @@ export function TableViewer() {
     }, [])
 
 
-    return <>{
-        // (tables.length === 0) ? <Backdrop
-        //         sx={{color: '#fff', position: 'absolute', zIndex: (theme) => theme.zIndex.drawer + 1}}
-        //         open={true}
-        //         // onClick={handleClose}
-        //     >
-        //         <CircularProgress color="inherit"/>
-        //     </Backdrop> :
-            <List
-                sx={{width: '100%', maxWidth: 360, bgcolor: 'background.paper'}}
-                subheader={<ListSubheader>Share Tables</ListSubheader>}
-            >
-                {tables && tables.map((table, index) => {
-                    return <TableItem key={index} table={table} index={index}/>
-                })}
-            </List>
-    }</>
+    return <>
+        <List
+            sx={{width: '100%', maxWidth: 360, bgcolor: 'background.paper'}}
+            subheader={<ListSubheader>Share Tables</ListSubheader>}
+        >
+            {tables && tables.map((table, index) => {
+                return <TableItem key={index} table={table} index={index}/>
+            })}
+        </List>
+    </>
 }

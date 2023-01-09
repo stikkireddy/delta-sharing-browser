@@ -27,17 +27,30 @@ export const TableOutput = () => {
 
     const rows = useSQLStore((state) => state.rows)
     const columns = useSQLStore((state) => state.columns)
+    const loading = useSQLStore((state) => state.loading)
 
     useEffect(() => {
         setPage(0)
     }, [rows, columns])
 
+
+
     return (
+
         <Paper sx={{
             width: '100%',
             overflow: 'hidden',
             position: 'relative'
         }}>
+            {
+            loading && <Backdrop
+                sx={{color: '#fff', position: 'absolute', zIndex: (theme) => theme.zIndex.drawer + 1}}
+                open={true}
+                // onClick={handleClose}
+            >
+                <CircularProgress color="inherit"/>
+            </Backdrop>
+        }
             {/*TODO: backdrop during loading*/}
             {/*<Backdrop*/}
             {/*  sx={{ color: '#fff', position: 'absolute', zIndex: (theme) => theme.zIndex.drawer + 1 }}*/}
