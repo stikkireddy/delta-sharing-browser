@@ -3,7 +3,7 @@ import 'ace-builds/src-noconflict/mode-sql'
 import 'ace-builds/src-noconflict/theme-solarized_light'
 import 'ace-builds/src-noconflict/theme-tomorrow'
 import 'ace-builds/src-noconflict/ext-language_tools'
-import {useSQLStore} from "../store/SqlStore";
+import {ShareHelper, useSQLStore} from "../store/SqlStore";
 import {useDuckDB} from "../store/DuckDB";
 import {execSql} from "./DeltaSharingBrowser";
 import {format} from "sql-formatter";
@@ -21,28 +21,32 @@ export const CodeEditor = () => {
 
     const tables = useSQLStore((state) => state.tables)
 
-    const db = useDuckDB((state) => state.db, shallow)
+    const db = useDuckDB((state) => state.db)
+    const conn = useDuckDB((state) => state.conn)
+
     const setData = useSQLStore((state) => state.setData)
     const setLoading = useSQLStore((state) => state.setLoading)
     const setQueryStatus = useSQLStore((state) => state.setQueryStatus)
     const setSelectedSql = useSQLStore((state) => state.setSelectedSql)
 
+    const addDuckDbView = useSQLStore((state) => state.addDuckDbView)
+
     // @ts-ignore
     const runsql = (editor) => {
         if (editor.getSelectedText() === "" || editor.getSelectedText() === null) {
-            execSql(db, editor.getValue(), setData, setLoading, setQueryStatus)
+            execSql(conn, editor.getValue(), setData, setLoading, setQueryStatus, addDuckDbView)
             return
         }
         // console.log(editor.getSelectedText())
-        execSql(db, editor.getSelectedText(), setData, setLoading, setQueryStatus)
+        execSql(conn, editor.getSelectedText(), setData, setLoading, setQueryStatus, addDuckDbView)
     }
 
     return (
         <>
             {db && <AceEditor
                 width={"100%"}
-
-                height={"400px"}
+                height={"100%"}
+                // height={"400px"}
                 mode="sql"
                 theme="tomorrow"
                 onSelectionChange={(selectedValue, event) => {
@@ -67,8 +71,9 @@ export const CodeEditor = () => {
                             // we can use session and pos here to decide what we are going to show
                             tables?.forEach(function (w) {
                                 completions.push({
-                                    value: w,
-                                    meta: "Table",
+                                    name: w.tableName,
+                                    value: ShareHelper.makeDuckDbViewFullName(w),
+                                    meta: "View",
                                 });
                             });
                             // @ts-ignore

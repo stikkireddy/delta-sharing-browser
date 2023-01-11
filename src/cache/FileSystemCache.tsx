@@ -2,6 +2,7 @@
 import {showDirectoryPicker, showOpenFilePicker} from "native-file-system-adapter";
 import {FileSystemDirectoryHandle} from "native-file-system-adapter/types/src/showDirectoryPicker";
 import axios from "axios";
+import {AsyncDuckDB, DuckDBDataProtocol} from "@duckdb/duckdb-wasm";
 
 export const getDirHandle = async (dirHandle?: FileSystemDirectoryHandle, dirPath?: string):
     Promise<FileSystemDirectoryHandle> => {
