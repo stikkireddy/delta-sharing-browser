@@ -145,7 +145,6 @@ const registerTable = async (urls: Array<string>,
                 // const fileName = parts[parts.length - 1]
                 try {
                     console.log("loading from browser filereader")
-                    console.log(data)
                     if (cacheDirHandle != null) {
                         // local dir requires registering the file handle
                         // TODO: refactor the weird awaits

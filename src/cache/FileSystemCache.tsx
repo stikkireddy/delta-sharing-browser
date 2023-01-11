@@ -1,22 +1,17 @@
 // @ts-ignore
-import {showDirectoryPicker, showOpenFilePicker} from "native-file-system-adapter";
+import {getOriginPrivateDirectory, showDirectoryPicker, showOpenFilePicker} from "native-file-system-adapter";
 import {FileSystemDirectoryHandle} from "native-file-system-adapter/types/src/showDirectoryPicker";
 import axios from "axios";
+// import nodeAdapter from 'native-file-system-adapter/lib/adapters/node.js'
 import {AsyncDuckDB, DuckDBDataProtocol} from "@duckdb/duckdb-wasm";
 
 export const getDirHandle = async (dirHandle?: FileSystemDirectoryHandle, dirPath?: string):
     Promise<FileSystemDirectoryHandle> => {
     await navigator.serviceWorker.register('sw.js')
-    let resHandle: FileSystemDirectoryHandle = await dirHandle ?? await showDirectoryPicker({
-        _preferPolyfill: false,
-    })
-        .then((r: FileSystemDirectoryHandle) => {
-            console.log(r)
-            return r
-        })
-        .catch((error: Error) => {
-            console.log(error)
-        })
+    // return await getOriginPrivateDirectory(import('native-file-system-adapter/src/adapters/indexeddb.js'), )
+    let resHandle: FileSystemDirectoryHandle = await dirHandle ??
+        // @ts-ignore
+        await getOriginPrivateDirectory(import('native-file-system-adapter/src/adapters/indexeddb.js'), )
     return (dirPath) ? resHandle.getDirectoryHandle(dirPath, {create: true}) : resHandle
 }
 
@@ -46,11 +41,16 @@ export const getOrPutArrayBuffer = async (
     try{
 
         let fileHandle = await tableHandle.getFileHandle(fileName)
+        let file = await fileHandle.getFile()
+        if (file.size == 0) {
+            // console.log("Failed to download file, treating as cache miss...")
+            throw new Error("Failed to download file, treating as cache miss...")
+        }
         // let arrayBuffer =  await (await fileHandle.getFile()).arrayBuffer()
-        console.log("Cache hit!")
+        console.log(`IndexedDB Cache hit! ${shareName}/${schemaName}/${tableName}/${fileName}`)
         return fileHandle
     } catch (error) {
-        console.log("Cache miss")
+        console.log(`IndexedDB Cache miss! ${shareName}/${schemaName}/${tableName}/${fileName}`)
         let blob = getData(url)
         let fileHandle = await tableHandle.getFileHandle(fileName, {create: true})
         // @ts-ignore

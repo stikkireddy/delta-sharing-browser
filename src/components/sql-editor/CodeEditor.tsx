@@ -122,7 +122,7 @@ export const CodeEditor = () => {
                 showPrintMargin={true}
                 showGutter={true}
                 highlightActiveLine={true}
-                defaultValue={"SELECT * FROM sri_delta_sharing_airports;"}
+                defaultValue={"SELECT * FROM sri_delta_share_sri_delta_sharing.airports;"}
                 setOptions={{
 
                     enableBasicAutocompletion: true,

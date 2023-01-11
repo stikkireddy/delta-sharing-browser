@@ -6,6 +6,8 @@ import duckdb_wasm_eh from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
 import eh_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url';
 import {AsyncDuckDBConnection} from "@duckdb/duckdb-wasm/dist/types/src/parallel/async_connection";
 import {useEffect} from "react";
+import {getDirHandle} from "../../cache/FileSystemCache";
+import {FileSystemDirectoryHandle} from "native-file-system-adapter/types/src/showDirectoryPicker";
 
 interface DuckDBState {
     db: duckdb.AsyncDuckDB | null
@@ -62,8 +64,17 @@ export const useDuckDB = create<DuckDBState>((set) => ({
 
 export const startDuckDB = async (
     setDB: (db: duckdb.AsyncDuckDB | null) => void,
-    setConn: (conn: duckdb.AsyncDuckDBConnection | null) => void
+    setConn: (conn: duckdb.AsyncDuckDBConnection | null) => void,
+    cacheDirHandle: FileSystemDirectoryHandle | null,
+    setCacheDirHandle: (handle: FileSystemDirectoryHandle) => void
+
 ) => {
+      if (cacheDirHandle === null) {
+          getDirHandle().then((r) => {
+              setCacheDirHandle(r)
+              console.log("Configured Cache Dir Handle")
+          })
+      }
     console.log("Loading duckdb...")
     const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
         mvp: {

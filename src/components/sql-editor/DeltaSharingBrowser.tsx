@@ -118,9 +118,6 @@ const RunButton = () => {
 
 const MenuPane = () => {
 
-    const setCacheDirHandle = useDownloadState((state) => state.setCacheDirHandle)
-    const cacheDirHandle = useDownloadState((state) => state.cacheDirHandle)
-
     return <Grid item xs={12}>
                 <Stack
                     direction="row"
@@ -148,23 +145,23 @@ const MenuPane = () => {
                     {/*                   endIcon={<FileUploadIcon/>}>*/}
                     {/*        Attach Share*/}
                     {/*    </LoadingButton>*/}
-                    <FormGroup>
-                        <FormControlLabel
-                            control={<Switch color={"success"}
-                                             checked={cacheDirHandle !== null}
-                                             onClick={() => {
-                                                 if (cacheDirHandle === null) {
-                                                     getDirHandle().then((r) => {
-                                                         setCacheDirHandle(r)
-                                                         console.log("Configured Cache Dir Handle")
-                                                     })
-                                                 }
-                                             }}
-                            />}
-                            label={(cacheDirHandle === null) ? "Create Local Cache" : "Using Local Cache"}
-                            labelPlacement={"end"}
-                        />
-                    </FormGroup>
+                    {/*<FormGroup>*/}
+                    {/*    <FormControlLabel*/}
+                    {/*        control={<Switch color={"success"}*/}
+                    {/*                         checked={cacheDirHandle !== null}*/}
+                    {/*                         onClick={() => {*/}
+                    {/*                             if (cacheDirHandle === null) {*/}
+                    {/*                                 getDirHandle().then((r) => {*/}
+                    {/*                                     setCacheDirHandle(r)*/}
+                    {/*                                     console.log("Configured Cache Dir Handle")*/}
+                    {/*                                 })*/}
+                    {/*                             }*/}
+                    {/*                         }}*/}
+                    {/*        />}*/}
+                    {/*        label={(cacheDirHandle === null) ? "Create Local Cache" : "Using Local Cache"}*/}
+                    {/*        labelPlacement={"end"}*/}
+                    {/*    />*/}
+                    {/*</FormGroup>*/}
                     <RunButton/>
                 </Stack>
             </Grid>
@@ -183,9 +180,10 @@ export const DeltaSharingBrowser = () => {
         >
             <CircularProgress color="inherit"/>
         </Backdrop>}
-        <Grid container spacing={2}>
+        <Grid className={"SqlBrowserPanel"} container spacing={2}>
             <MenuPane/>
-            <Box position={"relative"} width={"100vw"}
+            <Box position={"relative"}
+                 width={"100vw"}
                  minHeight={"80vh"}
                  height={"100%"}
                  marginTop={"5px"}>

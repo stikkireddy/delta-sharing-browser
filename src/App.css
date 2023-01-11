@@ -117,6 +117,17 @@
     overflow: auto !important;
 }
 
+.MuiContainer-root.MainCanvasContainer {
+    /*margin-top: ;*/
+    display: flex;
+}
+
+.MuiGrid-root.MuiGrid-container.SqlBrowserPanel {
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+}
+
 /*.ace_editor.ace_hidpi {*/
 /*    display: contents !important;*/
 /*}*/
