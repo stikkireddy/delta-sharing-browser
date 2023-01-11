@@ -88,20 +88,12 @@
     padding: 0px !important;
 }
 
-.ace_editor:not(.ace_autocomplete) {
-    /*flex-basis: max-content !important;*/
-    /*height: 400px !important;*/
-    /*display: contents !important;*/
-}
-
-
 .ace_editor.ace_autocomplete {
     width: 450px !important;
 }
 
 .MuiGrid-item.TableViewer {
     overflow: auto !important;
-    /*height: 400px !important;*/
 }
 
 .MuiPaper-root.DatabaseViewerAccordion {
@@ -118,7 +110,6 @@
 }
 
 .MuiContainer-root.MainCanvasContainer {
-    /*margin-top: ;*/
     display: flex;
 }
 
@@ -127,7 +118,3 @@
     margin-left: 0 !important;
     margin-top: 0 !important;
 }
-
-/*.ace_editor.ace_hidpi {*/
-/*    display: contents !important;*/
-/*}*/

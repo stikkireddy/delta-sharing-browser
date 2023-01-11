@@ -173,8 +173,10 @@ export const DeltaSharingBrowser = () => {
     const db = useDuckDB((state) => state.db)
     const tables = useSQLStore((state) => state.tables)
 
+    // backdrop position must be absolute and cover the container
     return <>
         {(db === null || tables.length === 0) && <Backdrop
+
             sx={{color: '#fff', position: 'absolute', zIndex: (theme) => theme.zIndex.drawer + 1}}
             open={true}
         >
@@ -182,13 +184,13 @@ export const DeltaSharingBrowser = () => {
         </Backdrop>}
         <Grid className={"SqlBrowserPanel"} container spacing={2}>
             <MenuPane/>
-            <Box position={"relative"}
-                 width={"100vw"}
-                 minHeight={"80vh"}
-                 height={"100%"}
+            <Box
+                display={"flex"}
+                position={"relative"}
+                 width={"100%"}
                  marginTop={"5px"}>
                 {/*@ts-ignore*/}
-                <SplitPane style={{position: "absolute"}}
+                <SplitPane style={{position: "relative"}}
                            split="vertical"
                            className={"ViewerPlusCanvasSplitPane"}
                            defaultSize={400}
@@ -198,7 +200,7 @@ export const DeltaSharingBrowser = () => {
                         <TableViewer/>
                     </Grid>
                     {/*@ts-ignore*/}
-                    <SplitPane style={{position: "absolute", overflow: "inherit"}}
+                    <SplitPane style={{position: "relative", overflow: "inherit"}}
                                className={"EditorPlusOutputSplitPane"}
                                split="horizontal"
                                minSize={300}
