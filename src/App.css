@@ -108,9 +108,14 @@
 .ViewerPlusCanvasSplitPane > .Pane1 {
     overflow: auto !important;
 }
+.ViewerPlusCanvasSplitPane > .Pane2 {
+    overflow: auto !important;
+}
 
 .MuiContainer-root.MainCanvasContainer {
-    display: flex;
+    display: flex !important;
+    overflow: auto !important;
+    padding-top: 24px !important;
 }
 
 .MuiGrid-root.MuiGrid-container.SqlBrowserPanel {

@@ -1,7 +1,5 @@
 import create from "zustand";
-import {useDuckDB} from "./DuckDB";
 import {AsyncDuckDBConnection} from "@duckdb/duckdb-wasm/dist/types/src/parallel/async_connection";
-import {Struct} from "apache-arrow";
 
 export type Column = {
     name: string;
@@ -32,7 +30,7 @@ export type DuckDbTreeView = Record<string, Record<string, DuckDbView>>
 
 export class ShareHelper {
     static makeShareTreeView(shareTables: ShareTable[]): ShareTreeView {
-        var tree: ShareTreeView = {}
+        const tree: ShareTreeView = {}
         shareTables.forEach((table) => {
             if (!tree[table.shareName]) {
                 tree[table.shareName] = {}
@@ -45,7 +43,7 @@ export class ShareHelper {
         return tree
     }
     static makeDuckDbTreeView(duckDbViews: DuckDbView[]): DuckDbTreeView {
-        var tree: DuckDbTreeView = {}
+        const tree: DuckDbTreeView = {}
         duckDbViews.forEach((view) => {
             if (!tree[view.schemaName]) {
                 tree[view.schemaName] = {}
@@ -80,12 +78,21 @@ export class ShareHelper {
     }
 }
 
-// export const getSchema = async(conn: AsyncDuckDBConnection | null) => {
-//     if (conn == null) return
-//     const results = await (conn?.query(`SELECT current_schema() as currentSchema;`))
-//     console.log(JSON.parse(results.toString()))
-//     console.log(results.toString())
-// }
+export const getSchema = async(conn: AsyncDuckDBConnection | null,
+                               setCurrentSchema: (schema: string) => void) => {
+    if (conn == null) return
+    const results = await (conn?.query(`SELECT current_schema() as currentSchema;`))
+    const schema = JSON.parse(results.toString())[0].currentSchema
+    setCurrentSchema(schema)
+}
+
+export const setSchema = async(conn: AsyncDuckDBConnection | null,
+                               setCurrentSchema: (schema: string) => void,
+                               schemaToSet: string) => {
+    if (conn == null) return
+    await (conn?.query(`set SCHEMA='${schemaToSet}';`))
+    setCurrentSchema(schemaToSet)
+}
 
 export const getAllTablesInDuckDb = async(
     conn: AsyncDuckDBConnection | null,
@@ -124,10 +131,12 @@ interface SqlStore {
     sql: string
     loading: boolean
     queryStatus: string | null,
+    currentSchema: string | null,
     tables: ShareTable[]
     duckDbViews: DuckDbView[]
     columns: Column[]
     rows: Row[]
+    setCurrentSchema: (schema: string) => void
     setSqlString: (sql: string) => void
     setData: (cols: Column[], rows: Row[]) => void
     addTable: (table: ShareTable) => void
@@ -140,16 +149,20 @@ interface SqlStore {
 export const useSQLStore = create<SqlStore>((set) => ({
     selectedSql: false,
     sql: "",
+    currentSchema: null,
     loading: false,
     columns: [],
     queryStatus: null,
     tables: [],
     duckDbViews: [],
     rows: [],
-    setSqlString: (sql: string) => set((state) => ({
+    setSqlString: (sql: string) => set(() => ({
         sql: sql,
     })),
-    setData: (cols: Column[], rows: Row[]) => set((state) => ({
+    setCurrentSchema: (schema: string) => set(() => ({
+        currentSchema: schema,
+    })),
+    setData: (cols: Column[], rows: Row[]) => set(() => ({
         columns: cols,
         rows: rows
     })),
@@ -159,13 +172,13 @@ export const useSQLStore = create<SqlStore>((set) => ({
     addDuckDbView: (duckDbView: DuckDbView) => set((state) => ({
         duckDbViews: state.duckDbViews.concat([duckDbView])
     })),
-    setLoading: (loading: boolean) => set((state) => ({
+    setLoading: (loading: boolean) => set(() => ({
         loading: loading
     })),
-    setSelectedSql: (selectedSql: boolean) => set((state) => ({
+    setSelectedSql: (selectedSql: boolean) => set(() => ({
         selectedSql: selectedSql
     })),
-    setQueryStatus: (queryStatus: string) => set((state) => ({
+    setQueryStatus: (queryStatus: string) => set(() => ({
         queryStatus: queryStatus
     })),
 }))

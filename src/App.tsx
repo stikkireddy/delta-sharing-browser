@@ -1,4 +1,4 @@
-import {useEffect} from 'react'
+import React, {useEffect} from 'react'
 import './App.css'
 import {DeltaSharingBrowser} from "./components/sql-editor/DeltaSharingBrowser";
 import {Navbar} from "./components/navbar/Navbar";
@@ -8,6 +8,7 @@ import {QueryClient, QueryClientProvider,} from '@tanstack/react-query'
 import {ToastContainer} from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import {useDownloadState} from "./components/store/DownloadFileStore";
+import {HowToModal} from "./components/navbar/HowToModal";
 
 const queryClient = new QueryClient()
 
@@ -54,6 +55,7 @@ function App() {
                     <DeltaSharingBrowser/>
                 </Container>
                 <ToastContainer />
+                <HowToModal/>
             </QueryClientProvider>
         </div>
     )

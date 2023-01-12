@@ -1,4 +1,4 @@
-import {Backdrop, Box, CircularProgress, Grid, Hidden, Stack, Switch} from "@mui/material";
+import {Backdrop, Box, Chip, CircularProgress, Grid, Hidden, IconButton, Stack, Switch} from "@mui/material";
 import LoadingButton from '@mui/lab/LoadingButton';
 import {CodeEditor} from "./CodeEditor";
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -8,8 +8,10 @@ import {TableViewer} from "./TableViewer";
 import {useDuckDB} from "../store/DuckDB";
 import {Column, DuckDbView, getAllTablesInDuckDb, Row, useSQLStore} from "../store/SqlStore";
 import {AsyncDuckDB} from "@duckdb/duckdb-wasm";
+import InfoIcon from '@mui/icons-material/Info';
 import {LoadSnackBar} from "./FetchProgressbar";
 import QueryStatus from "./QueryStatus";
+import TableViewIcon from '@mui/icons-material/TableView';
 import {getDirHandle, getShareTokenAuth} from "../../cache/FileSystemCache";
 import {useDownloadState} from "../store/DownloadFileStore";
 // @ts-ignore
@@ -20,6 +22,7 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import {AsyncDuckDBConnection} from "@duckdb/duckdb-wasm/dist/types/src/parallel/async_connection";
+import {useGeneralState} from "../store/GeneralState";
 
 const setStatus = (start: number, setQueryStatus: (status: string) => void, errorMsg?: string) => {
     if (!errorMsg)
@@ -111,17 +114,19 @@ const RunButton = () => {
                                    onClick={onClickHandler}
                                    loadingPosition="end"
                                    size={"small"}
-                                   endIcon={<PlayArrowIcon/>}>
+                                   endIcon={<PlayArrowIcon style={{fontSize: "24px"}}/>}>
                         RUN {selectedSql ? "Selected" : ""}
                     </LoadingButton>
 }
 
 const MenuPane = () => {
+    const setOpen = useGeneralState((state) => state.setOpenInfoModal)
+    const currentSchema = useSQLStore((state) => state.currentSchema)
 
-    return <Grid item xs={12}>
+    return <Grid item xs={12} marginTop={"5px"} marginBottom={"10px"} marginLeft={"0.5em"}>
                 <Stack
                     direction="row"
-                    justifyContent="flex-end"
+                    justifyContent="flex-start"
                     alignItems="center"
                     spacing={1}
                 >
@@ -162,7 +167,16 @@ const MenuPane = () => {
                     {/*        labelPlacement={"end"}*/}
                     {/*    />*/}
                     {/*</FormGroup>*/}
+
+                    <IconButton onClick={() => setOpen(true)}>
+                        <InfoIcon/>
+                    </IconButton>
                     <RunButton/>
+                    {<Chip color="info" size="small" label={<Typography>
+                         Using: {currentSchema ?? "main"}
+                     </Typography>}
+                              icon={<TableViewIcon />} />
+                    }
                 </Stack>
             </Grid>
 
@@ -183,7 +197,6 @@ export const DeltaSharingBrowser = () => {
             <CircularProgress color="inherit"/>
         </Backdrop>}
         <Grid className={"SqlBrowserPanel"} container spacing={2}>
-            <MenuPane/>
             <Box
                 display={"flex"}
                 position={"relative"}
@@ -207,6 +220,7 @@ export const DeltaSharingBrowser = () => {
                                defaultSize={300}
                                maxSize={400}>
                         <Grid item xs={12} style={{maxWidth: "100%"}}>
+                            <MenuPane/>
                             <CodeEditor/>
                         </Grid>
                         <Grid item xs={12}>

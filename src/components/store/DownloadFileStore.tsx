@@ -24,12 +24,12 @@ export const useDownloadState = create<DownloadState>((set) => ({
     progress: {},
     cacheDirHandle: null,
     credentialsFileData: null,
-    setCredentialsFileData: (auth: AuthData) => set((state) => {
+    setCredentialsFileData: (auth: AuthData) => set(() => {
         return ({
             credentialsFileData: auth
         })
     }),
-    setCacheDirHandle: (handle: FileSystemDirectoryHandle) =>  set((state) => {
+    setCacheDirHandle: (handle: FileSystemDirectoryHandle) =>  set(() => {
         return ({
             cacheDirHandle: handle,
         })
@@ -43,7 +43,7 @@ export const useDownloadState = create<DownloadState>((set) => ({
         })
     }),
     addToProgress: (table: string, entry?: string) => set((state) => {
-        let data = (state.progress[table] ?? [])
+        const data = (state.progress[table] ?? [])
         data.push(entry ?? "something")
         state.progress[table] = data
         return ({

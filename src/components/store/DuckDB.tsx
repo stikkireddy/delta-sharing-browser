@@ -5,7 +5,6 @@ import mvp_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?ur
 import duckdb_wasm_eh from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
 import eh_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url';
 import {AsyncDuckDBConnection} from "@duckdb/duckdb-wasm/dist/types/src/parallel/async_connection";
-import {useEffect} from "react";
 import {getDirHandle} from "../../cache/FileSystemCache";
 import {FileSystemDirectoryHandle} from "native-file-system-adapter/types/src/showDirectoryPicker";
 
@@ -20,10 +19,10 @@ interface DuckDBState {
 export const useDuckDB = create<DuckDBState>((set) => ({
     db: null,
     conn: null,
-    setDB: (db: duckdb.AsyncDuckDB | null) => set((state) => ({
+    setDB: (db: duckdb.AsyncDuckDB | null) => set(() => ({
         db: db,
     })),
-    setConn: (conn: duckdb.AsyncDuckDBConnection | null) => set((state) => ({
+    setConn: (conn: duckdb.AsyncDuckDBConnection | null) => set(() => ({
         conn: conn,
     })),
 }))

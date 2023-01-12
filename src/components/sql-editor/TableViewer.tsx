@@ -21,10 +21,10 @@ export function TableViewer() {
         const tables = await tablesReq
 
         tables.map((table: Record<string, string>) => {
-            let shareName = table["share_name"]
-            let schemaName = table["schema_name"]
-            let tableName = table["table_name"]
-            let shareTable = {
+            const shareName = table["share_name"]
+            const schemaName = table["schema_name"]
+            const tableName = table["table_name"]
+            const shareTable = {
                 shareName: shareName,
                 schemaName: schemaName,
                 tableName: tableName
@@ -39,7 +39,7 @@ export function TableViewer() {
 
     useEffect(() => {
         getTables()
-        return () => {}
+        return () => {return}
     }, [])
 
 

@@ -16,7 +16,7 @@ import Typography from "@mui/material/Typography";
 import {
     DuckDbColumn,
     DuckDbTreeView,
-    DuckDbView, getAllTablesInDuckDb,
+    DuckDbView, getAllTablesInDuckDb, setSchema,
     ShareHelper,
     ShareTable,
     ShareTreeView,
@@ -253,6 +253,34 @@ const ReloadDataButton = (props: {table: ShareTable}) => {
                                        endIcon={<DownloadForOfflineIcon/>}/>
 }
 
+const EntityLabel = (props: {left: string, right: string}) => {
+     return <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        spacing={2}
+    >
+        <Typography>{props.left}</Typography>
+        <Typography
+            fontSize={"0.95em"}
+            color={"rgba(136,136,136,1)"
+        }
+        ><i>{props.right}</i></Typography>
+    </Stack>
+}
+
+const ShareLabel = (props: { shareName: string }) => {
+    return <EntityLabel left={props.shareName} right={"SHARE"}/>
+}
+
+const SchemaLabel = (props: { schemaName: string }) => {
+    return <EntityLabel left={props.schemaName} right={"SCHEMA"}/>
+}
+
+const ViewLabel = (props: { viewName: string }) => {
+    return <EntityLabel left={props.viewName} right={"VIEW"}/>
+}
+
 const TableLabel = (props: { tableName: string, table: ShareTable }) => {
     return <Stack
         direction="row"
@@ -266,15 +294,7 @@ const TableLabel = (props: { tableName: string, table: ShareTable }) => {
 }
 
 const ColumnLabel = (props: { name: string, dataType: string }) => {
-    return <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        spacing={2}
-    >
-        <Typography>{props.name}</Typography>
-        <Typography>{props.dataType}</Typography>
-    </Stack>
+    return <EntityLabel left={props.name} right={props.dataType}/>
 }
 
 const computeShareTreeView = (treeView: ShareTreeView) => {
@@ -283,12 +303,12 @@ const computeShareTreeView = (treeView: ShareTreeView) => {
     let res = Object.keys(treeView).map((firstLevelNode: string, firstLevelIndex) => {
             let firstKey = firstLevelIndex+1
             firstLevelNodesToExpand.push(`${firstKey}`)
-            return <StyledTreeItem key={`${firstKey}`} nodeId={`${firstKey}`} label={firstLevelNode}>
+            return <StyledTreeItem key={`${firstKey}`} nodeId={`${firstKey}`} label={<ShareLabel shareName={firstLevelNode}/>}>
                 {
                     Object.keys(treeView[firstLevelNode]).map((secondLevelNode: string, secondLevelIndex) => {
                         let secondKey = secondLevelIndex+1
                         secondLevelNodesToExpand.push(`${secondKey}000`)
-                        return <StyledTreeItem key={`${secondKey}000`} nodeId={`${secondKey}000`} label={secondLevelNode}>
+                        return <StyledTreeItem key={`${secondKey}000`} nodeId={`${secondKey}000`} label={<SchemaLabel schemaName={secondLevelNode}/>}>
                             {
                                 Object.keys(treeView[firstLevelNode][secondLevelNode]).map((thirdLevelNode: string, thirdLevelIndex) =>
                                     <StyledTreeItem key={`${thirdLevelIndex}000000`} nodeId={`${thirdLevelIndex}000000`} label={<TableLabel
@@ -311,25 +331,16 @@ const computeShareTreeView = (treeView: ShareTreeView) => {
 
 const computeDuckDbTreeView = (treeView: DuckDbTreeView) => {
     let firstLevelNodesToExpand: Array<string> = [];
-    const toastFunc = () => {};
-        // toast('🦄 Wow so easy!', {
-        // position: "top-center",
-        // autoClose: 2000,
-        // hideProgressBar: false,
-        // closeOnClick: true,
-        // pauseOnHover: true,
-        // draggable: true,
-        // progress: undefined,
-        // theme: "light",
-        // });
+    const conn = useDuckDB((state) => state.conn)
+    const setCurrentSchema = useSQLStore((state) => state.setCurrentSchema)
     let res = Object.keys(treeView).map((firstLevelNode: string, firstLevelIndex) => {
             let firstKey = firstLevelIndex+1
             firstLevelNodesToExpand.push(`${firstKey}`)
             return <StyledTreeItem
                     key={`${firstLevelNode}`}
-                    // onClick={(data) => {toastFunc(); console.log(firstLevelNode);}}
+                    onClick={(data) => {setSchema(conn, setCurrentSchema, firstLevelNode)}}
                     nodeId={`${firstLevelNode}`}
-                    label={firstLevelNode}>
+                    label={<SchemaLabel schemaName={firstLevelNode}/>}>
                 {
                     Object.keys(treeView[firstLevelNode]).map((secondLevelNode: string, secondLevelIndex) => {
                         let secondKey = secondLevelIndex+1
@@ -337,7 +348,7 @@ const computeDuckDbTreeView = (treeView: DuckDbTreeView) => {
                                 // onClick={(data) => {toastFunc(); console.log(firstLevelNode);}}
                                 key={`${firstLevelNode}//${secondLevelNode}`}
                                 nodeId={`${firstLevelNode}//${secondLevelNode}`}
-                                label={secondLevelNode}>
+                                label={<ViewLabel viewName={secondLevelNode}/>}>
                             {
                                 treeView[firstLevelNode][secondLevelNode].columns.map((col: DuckDbColumn, thirdLevelIndex) =>
                                     <StyledTreeItem

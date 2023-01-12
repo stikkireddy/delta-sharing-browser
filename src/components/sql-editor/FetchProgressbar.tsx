@@ -23,9 +23,9 @@ function LinearProgressWithLabel(props: LinearProgressProps & { value: number })
 
 const getProgressBars = (downloadReq: Record<string, number>, progress: Record<string, Array<string>>) => {
     const progressBars = Object.keys(downloadReq).map((k) => {
-                            let itemProgress = progress[k] ?? []
-                            let downloadProgress = (itemProgress.length / downloadReq[k]) * 100
-                            let parts = k.split("/")
+                            const itemProgress = progress[k] ?? []
+                            const downloadProgress = (itemProgress.length / downloadReq[k]) * 100
+                            const parts = k.split("/")
                             if (downloadReq[k] >= 0 && downloadProgress < 100)
                                 return <Stack className={"progressbar-stack"}
                                               justifyContent={"space-between"}
@@ -52,7 +52,7 @@ const getProgressBars = (downloadReq: Record<string, number>, progress: Record<s
         />
 }
 
-export function LoadSnackBar(props: { key: string }) {
+export function LoadSnackBar() {
     const downloadReq = useDownloadState(state => state.downloadReq, shallow)
     const progress = useDownloadState(state => state.progress, shallow)
         return getProgressBars(downloadReq, progress)

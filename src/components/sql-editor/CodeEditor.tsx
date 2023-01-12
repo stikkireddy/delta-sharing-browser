@@ -7,7 +7,6 @@ import {ShareHelper, useSQLStore} from "../store/SqlStore";
 import {useDuckDB} from "../store/DuckDB";
 import {execSql} from "./DeltaSharingBrowser";
 import {format} from "sql-formatter";
-import shallow from "zustand/shallow";
 import 'ace-builds/src-noconflict/snippets/sql'
 import {useState} from "react";
 
@@ -73,6 +72,18 @@ export const CodeEditor = () => {
                                 completions.push({
                                     name: w.tableName,
                                     value: ShareHelper.makeDuckDbViewFullName(w),
+                                    meta: "View",
+                                });
+                            });
+                            tables?.forEach(function (w) {
+                                completions.push({
+                                    value: w.schemaName,
+                                    meta: "Schema",
+                                });
+                            });
+                            tables?.forEach(function (w) {
+                                completions.push({
+                                    value: w.tableName,
                                     meta: "View",
                                 });
                             });
